@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 import traceback
-
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = FastAPI()
 
@@ -15,9 +16,10 @@ class LatencyRequest(BaseModel):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],  
-    allow_headers=["*"], 
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
@@ -28,7 +30,8 @@ def read_root():
 @app.post("/latency")
 def calculate_latency(request: LatencyRequest):
     try:
-        data = pd.read_json("q-vercel-latency.json")
+        file_path = os.path.join(BASE_DIR, "q-vercel-latency.json")
+        data = pd.read_json(file_path)
         results = {}
         for region in request.regions:
             region_data = data[data["region"] == region]
