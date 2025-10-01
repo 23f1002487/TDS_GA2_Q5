@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  
 from pydantic import BaseModel
 import pandas as pd
+import traceback
 
 
 app = FastAPI()
@@ -26,28 +27,26 @@ def read_root():
 
 @app.post("/latency")
 def calculate_latency(request: LatencyRequest):
-    # Load the data from the root directory
-    data = pd.read_json("q-vercel-latency.json")
-    
-    results = {}
-    
-    for region in request.regions:
-        region_data = data[data["region"] == region]
-
-        if not region_data.empty:
-            avg_latency = region_data["latency"].mean()
-            avg_uptime = region_data["uptime"].mean()
-            p95_latency = region_data["latency"].quantile(0.95)
-
-            breaches = int((region_data["latency"] > request.threshold_ms).sum())
-
-            results[region] = {
-                "avg_latency": round(avg_latency, 2),
-                "avg_uptime": round(avg_uptime, 2),
-                "p95_latency": round(p95_latency, 2),
-                "breaches": breaches,
-            }
-        else:
-            results[region] = {"error": "Region not found in data."}
-
-    return results
+    try:
+        data = pd.read_json("q-vercel-latency.json")
+        results = {}
+        for region in request.regions:
+            region_data = data[data["region"] == region]
+            if not region_data.empty:
+                avg_latency = region_data["latency"].mean()
+                avg_uptime = region_data["uptime"].mean()
+                p95_latency = region_data["latency"].quantile(0.95)
+                breaches = int((region_data["latency"] > request.threshold_ms).sum())
+                results[region] = {
+                    "avg_latency": round(avg_latency, 2),
+                    "avg_uptime": round(avg_uptime, 2),
+                    "p95_latency": round(p95_latency, 2),
+                    "breaches": breaches,
+                }
+            else:
+                results[region] = {"error": "Region not found in data."}
+        return results
+    except Exception as e:
+        print("🔥 ERROR:", str(e))
+        print(traceback.format_exc())
+        return {"error": str(e)}
