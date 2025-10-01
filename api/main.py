@@ -54,65 +54,66 @@
 #         print(traceback.format_exc())
 #         return {"error": str(e)}
 
-
-import http.server
-import socketserver
 import json
+import os
 import pandas as pd
+from http.server import BaseHTTPRequestHandler
 
-PORT = 8000
+# Path to your JSON file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+JSON_FILE = os.path.join(BASE_DIR, "q-vercel-latency.json")
 
-class MyHandler(http.server.SimpleHTTPRequestHandler):
+class handler(BaseHTTPRequestHandler):
+    def _set_headers(self):
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")  # CORS
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    def do_OPTIONS(self):
+        """Handle CORS preflight"""
+        self._set_headers()
+
+    def do_GET(self):
+        self._set_headers()
+        self.wfile.write(json.dumps({"message": "Hello! Use POST /latency"}).encode("utf-8"))
+
     def do_POST(self):
-        if self.path == "/latency":
-            content_length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(content_length)
-            request_data = json.loads(body.decode("utf-8"))
-
-            # Load JSON file
-            try:
-                data = pd.read_json("q-vercel-latency.json")
-            except FileNotFoundError:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Access-Control-Allow-Origin", "*")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "File not found"}).encode())
-                return
-
-            regions = request_data.get("regions", [])
-            threshold = request_data.get("threshold_ms", 0)
-
-            results = {}
-            for region in regions:
-                region_data = data[data["region"] == region]
-                if not region_data.empty:
-                    avg_latency = region_data["latency_ms"].mean()
-                    avg_uptime = region_data["uptime_pct"].mean()
-                    p95_latency = region_data["latency_ms"].quantile(0.95)
-                    breaches = int((region_data["latency_ms"] > threshold).sum())
-
-                    results[region] = {
-                        "avg_latency": round(avg_latency, 2),
-                        "avg_uptime": round(avg_uptime, 2),
-                        "p95_latency": round(p95_latency, 2),
-                        "breaches": breaches,
-                    }
-                else:
-                    results[region] = {"error": "Region not found"}
-
-            # Send response
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")  # basic CORS
-            self.end_headers()
-            self.wfile.write(json.dumps(results).encode())
-
-        else:
+        if self.path != "/latency":
             self.send_response(404)
             self.end_headers()
             self.wfile.write(b"Not Found")
+            return
 
-with socketserver.TCPServer(("", PORT), MyHandler) as httpd:
-    print(f"Serving on port {PORT}")
-    httpd.serve_forever()
+        content_length = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(content_length)
+        request_data = json.loads(body.decode("utf-8"))
+
+        # Load JSON
+        data = pd.read_json(JSON_FILE)
+
+        regions = request_data.get("regions", [])
+        threshold = request_data.get("threshold_ms", 0)
+
+        results = {}
+        for region in regions:
+            region_data = data[data["region"] == region]
+            if not region_data.empty:
+                avg_latency = region_data["latency_ms"].mean()
+                avg_uptime = region_data["uptime_pct"].mean()
+                p95_latency = region_data["latency_ms"].quantile(0.95)
+                breaches = int((region_data["latency_ms"] > threshold).sum())
+
+                results[region] = {
+                    "avg_latency": round(avg_latency, 2),
+                    "avg_uptime": round(avg_uptime, 2),
+                    "p95_latency": round(p95_latency, 2),
+                    "breaches": breaches,
+                }
+            else:
+                results[region] = {"error": "Region not found"}
+
+        self._set_headers()
+        self.wfile.write(json.dumps(results).encode("utf-8"))
