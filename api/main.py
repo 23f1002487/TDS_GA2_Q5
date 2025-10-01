@@ -36,10 +36,10 @@ def calculate_latency(request: LatencyRequest):
         for region in request.regions:
             region_data = data[data["region"] == region]
             if not region_data.empty:
-                avg_latency = region_data["latency"].mean()
+                avg_latency = region_data["latency_ms"].mean()
                 avg_uptime = region_data["uptime"].mean()
                 p95_latency = region_data["latency"].quantile(0.95)
-                breaches = int((region_data["latency"] > request.threshold_ms).sum())
+                breaches = int((region_data["latency_ms"] > request.threshold_ms).sum())
                 results[region] = {
                     "avg_latency": round(avg_latency, 2),
                     "avg_uptime": round(avg_uptime, 2),
