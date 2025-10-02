@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repo
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12  # Valid version from GitHub's manifest
+          python-version: 3.12
 
       # Step 3: Cache pip dependencies
       - name: prime-cache-010a330
@@ -25,14 +25,26 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: cache-010a330
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      # Step 4: Install dependencies (optional)
+      # Step 4: Install dependencies
       - name: Install Python packages
         run: |
           python -m pip install --upgrade pip
-          pip install fastapi pandas pydantic
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install fastapi pandas pydantic
+          fi
 
       # Step 5: Show cache hit/miss
       - name: Cache hit/miss result
-        run: echo "Cache hit? ${{ steps.prime-cache-010a330.outputs.cache-hit }}"
+        run: |
+          if [ "${{ steps.prime-cache-010a330.outputs.cache-hit }}" == "true" ]; then
+            echo "Cache was hit"
+          else
+            echo "Cache was missed"
+          fi
+      
+      - name: 23f1002487@ds.study.iitm.ac.in
+        run: echo "Hello, world!"
