@@ -33,7 +33,7 @@ def calculate_latency(request: LatencyRequest):
     try:
         file_path = os.path.join(BASE_DIR, "q-vercel-latency.json")
         data = pd.read_json(file_path)
-        out = {"regions" : request.regions, "results": {}}
+        out = {"regions" : {}}
         temp = {}
         for region in request.regions:
             region_data = data[data["region"] == region]
@@ -50,7 +50,7 @@ def calculate_latency(request: LatencyRequest):
                 }
             else:
                 temp[region] = {"error": "Region not found in data."}
-        out["results"] = temp
+        out["regions"] = temp
         return out
     except Exception as e:
         print("🔥 ERROR:", str(e))
