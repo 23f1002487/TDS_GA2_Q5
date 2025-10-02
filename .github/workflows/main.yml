@@ -20,7 +20,7 @@ jobs:
           python-version: 3.12  # Valid version from GitHub's manifest
 
       # Step 3: Cache pip dependencies
-      - name: Prime cache 010a330
+      - name: prime-cache-010a330
         id: prime-cache-010a330
         uses: actions/cache@v4
         with:
