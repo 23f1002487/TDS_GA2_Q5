@@ -1,32 +1,38 @@
-name: TEstCacheAction
+name: TestCacheAction
 
 on:
   push:
     branches: [main]
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # step 1: Checkout repo
-      - name: Checkout repositoty
+      # Step 1: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # step 2: setup Python
+      # Step 2: Setup Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: 3.10  # Valid version from GitHub's manifest
 
-      # step 3: Cache dependencies
+      # Step 3: Cache pip dependencies
       - name: Prime cache 010a330
         id: prime-cache-010a330
         uses: actions/cache@v4
         with:
-          path:
-            ~/.cache/pip
+          path: ~/.cache/pip
           key: cache-010a330
-      
-      # step 4: Show cache hit/miss
+
+      # Step 4: Install dependencies (optional)
+      - name: Install Python packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi pandas pydantic
+
+      # Step 5: Show cache hit/miss
       - name: Cache hit/miss result
-        run: echo "Cache hit? ${{steps.prime-cache-010a330.outputs.cache-hit}}"
+        run: echo "Cache hit? ${{ steps.prime-cache-010a330.outputs.cache-hit }}"
