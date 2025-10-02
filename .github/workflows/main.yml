@@ -40,11 +40,7 @@ jobs:
       # Step 5: Show cache hit/miss
       - name: Cache hit/miss result
         run: |
-          if [ "${{ steps.prime-cache-010a330.outputs.cache-hit }}" == "true" ]; then
-            echo "Cache was hit"
-          else
-            echo "Cache was missed"
-          fi
+          echo "Cache hit? ${{ steps.prime-cache-010a330.outputs.cache-hit }}"
       
       - name: 23f1002487@ds.study.iitm.ac.in
         run: echo "Hello, world!"
