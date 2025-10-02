@@ -26,8 +26,8 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
-    # expose_headers removed; "*" is invalid
+    allow_headers=["*"],
+    expose_headers= ["*"] 
 )
 
 @app.get("/")
