@@ -29,4 +29,4 @@ jobs:
       
       # step 4: Show cache hit/miss
       - name: Cache hit/miss result
-        run: echo "Cache hit? ${{steps.prime-cache-010a330.outputs.cahce-hit}}"
+        run: echo "Cache hit? ${{steps.prime-cache-010a330.outputs.cache-hit}}"
